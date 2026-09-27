@@ -42,6 +42,15 @@ lib/
 
 The guiding principle: each layer has exactly one reason to change. `SeatingController` (desks/students/rules/randomizer) and `ClassesController`/`SettingsController` know nothing about `BuildContext` or any Flutter widget — user feedback is reported as plain string codes via a callback and turned into localized `SnackBar` text by the UI layer (`l10n/message_resolver.dart`). This is what makes the logic directly unit-testable without spinning up any UI. Riverpod's `ChangeNotifierProvider` exposes the controllers to the widget tree without manual prop-drilling.
 
+Installer built with `Inno Setup`
+
+## Download
+
+Grab the latest Windows installer from the [Releases page](https://github.com/zJeremi3-dev/seating_planner/releases/latest).
+Currently, Windows-only; other platforms may follow.
+
+The app checks for updates automatically and can update itself in place.
+
 ## Getting started
 
 ```
@@ -58,12 +67,24 @@ flutter test
 
 Not yet implemented — see [Known limitations](#known-limitations--roadmap).
 
+## Licenses
+
+This app bundles several open-source packages (Riverpod, shared_preferences, etc.), each under its own permissive license (MIT/BSD).
+Full license texts are viewable in-app under **Settings → Licenses**.
+
+
 ## Known limitations / roadmap
 
-- **Unit tests** for `SeatingController` (randomizer correctness, taboo/favorite/fixed-seat logic, row detection), persistence round-trips for `DataManager`, and widget tests for the editors.
+- **Unit tests** for `SeatingController` (randomizer correctness, taboo/favorite/fixed-seat logic, row detection), persistence round-trips for `DataManager`, and widget tests for the editors - coming soon.
 - **Dark mode is not implemented.** The Settings dialog already shows a disabled placeholder switch for it; it's intentionally deferred to a later commit rather than rushed in.
 - Class/desk geometry (grid size, desk sizes, neighbor thresholds) lives in `AppConfig` as fixed pixel constants, matching the original design; the whole board is scaled as one unit via `FittedBox` rather than each element scaling independently.
 
-## Licenses
+## A note on the Windows security warning
 
-This app bundles a few open-source packages (Riverpod, pdf, printing, shared_preferences, reorderable_grid_view), each under its own permissive license (MIT/BSD/Apache-2.0). See each package's page on [pub.dev](https://pub.dev) for details.
+Windows SmartScreen may warn that this installer is from an "unknown
+publisher." This is expected for small open-source projects without a
+paid code-signing certificate — it does **not** mean the file is
+malicious. The installer is built automatically and transparently from
+this repository's source via GitHub Actions (see `.github/workflows/release.yml`).
+
+If you see the warning: click **"More info" → "Run anyway"**.
