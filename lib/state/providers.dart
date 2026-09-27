@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_strings.dart';
+import '../services/update_checker.dart';
 import 'classes_controller.dart';
 import 'seating_controller.dart';
 import 'settings_controller.dart';
@@ -27,3 +28,10 @@ final appStringsProvider = Provider<AppStrings>((ref) {
   final settings = ref.watch(settingsControllerProvider);
   return AppStrings(settings.language);
 });
+
+/// Checks GitHub for a newer tagged release than the one currently
+/// installed. Same single passive GET as in dev_tools - see
+/// lib/services/update_checker.dart for the request itself.
+final updateCheckProvider = FutureProvider<UpdateInfo?>(
+  (ref) => checkForUpdate(),
+);

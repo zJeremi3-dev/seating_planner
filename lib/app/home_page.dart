@@ -14,6 +14,10 @@ import 'button_bar.dart';
 import 'seating_canvas.dart';
 import 'statistics_bar.dart';
 
+import 'dart:io';
+import 'package:url_launcher/url_launcher.dart';
+import '../services/self_updater.dart';
+
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -209,6 +213,43 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
+          Consumer(
+            builder: (context, ref, _) {
+              final update = ref.watch(updateCheckProvider).valueOrNull;
+              if (update == null) return const SizedBox.shrink();
+              return Container(
+                height: 40,
+                width: 40,
+                decoration: BoxDecoration(
+                  color: Color(0xFF595555),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Tooltip(
+                  message: 'Update to v${update.latestVersion} available',
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(width: 2, color: Color(0xFF595555)),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  textStyle: TextStyle(color: Colors.black),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.system_update_alt,
+                      color: Colors.amber,
+                    ),
+                    onPressed: () async {
+                      if (Platform.isWindows &&
+                          update.windowsDownloadUrl != null) {
+                        await downloadAndInstall(update.windowsDownloadUrl!);
+                      } else {
+                        launchUrl(Uri.parse(update.releaseUrl));
+                      }
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
           if (selectedClassId != null)
             IconButton(
               icon: const Icon(Icons.switch_account),
@@ -218,7 +259,10 @@ class _HomePageState extends ConsumerState<HomePage> {
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: strings.settingsTooltip,
-            onPressed: () => showSettingsDialog(context),
+            onPressed: () => showSettingsDialog(
+              context,
+              updateInfo: ref.read(updateCheckProvider).valueOrNull,
+            ),
           ),
         ],
       ),

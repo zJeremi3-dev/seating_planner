@@ -4,18 +4,47 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_language.dart';
 import '../state/providers.dart';
 
-Future<void> showSettingsDialog(BuildContext context) {
+import 'dart:io';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import '../services/update_checker.dart';
+import '../services/self_updater.dart';
+
+Future<void> showSettingsDialog(
+  BuildContext context, {
+  UpdateInfo? updateInfo,
+}) {
   return showDialog(
     context: context,
-    builder: (context) => const Dialog(child: _SettingsDialogContent()),
+    builder: (context) =>
+        Dialog(child: _SettingsDialogContent(updateInfo: updateInfo)),
   );
 }
 
-class _SettingsDialogContent extends ConsumerWidget {
-  const _SettingsDialogContent();
+class _SettingsDialogContent extends ConsumerStatefulWidget {
+  final UpdateInfo? updateInfo;
+
+  const _SettingsDialogContent({this.updateInfo});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SettingsDialogContent> createState() =>
+      _SettingsDialogContentState();
+}
+
+class _SettingsDialogContentState
+    extends ConsumerState<_SettingsDialogContent> {
+  String _appVersion = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _appVersion = info.version);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final settingsController = ref.watch(settingsControllerProvider);
     final strings = ref.watch(appStringsProvider);
 
@@ -46,6 +75,47 @@ class _SettingsDialogContent extends ConsumerWidget {
               ],
             ),
             const Divider(),
+            if (widget.updateInfo != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withAlpha(30),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.amber.withAlpha(100)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.system_update_alt,
+                      color: Colors.amber,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Update to v${widget.updateInfo!.latestVersion} available',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final info = widget.updateInfo!;
+                        if (Platform.isWindows &&
+                            info.windowsDownloadUrl != null) {
+                          await downloadAndInstall(info.windowsDownloadUrl!);
+                        } else {
+                          launchUrl(Uri.parse(info.releaseUrl));
+                        }
+                      },
+                      child: const Text('Update'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             Text(
               strings.settingsLanguageSection,
               style: const TextStyle(fontWeight: FontWeight.w600),
@@ -85,6 +155,20 @@ class _SettingsDialogContent extends ConsumerWidget {
               secondary: const Icon(Icons.dark_mode_outlined),
               value: false,
               onChanged: null,
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: 300,
+              height: 35,
+              child: OutlinedButton.icon(
+                onPressed: () => showLicensePage(
+                  context: context,
+                  applicationName: 'Seating-Planner',
+                  applicationVersion: _appVersion,
+                ),
+                icon: Icon(Icons.description_outlined),
+                label: Text("Licenses", style: TextStyle(fontSize: 20)),
+              ),
             ),
           ],
         ),
